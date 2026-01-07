@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Prediction Market</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; }
+        .container { width: 800px; margin-top: 50px; }
+        
+        /* Order Book Styling */
+        .book-container { display: flex; gap: 20px; margin-top: 20px; }
+        .column { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header { font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #ddd; padding-bottom: 5px;}
+        
+        .bids .header { color: #00b894; } /* Green for Buy */
+        .asks .header { color: #d63031; } /* Red for Sell */
+        
+        .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; }
+        
+        /* Form Styling */
+        .controls { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; gap: 10px; align-items: center;}
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; border: none; cursor: pointer; color: white; border-radius: 4px; font-weight: bold;}
+        .btn-buy { background: #00b894; }
+        .btn-sell { background: #d63031; }
+
+        .market-title { text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="market-title">
+        <h1>Market: Will it Rain Tomorrow?</h1>
+        <p>Current Status: <span id="last-trade">Waiting for trades...</span></p>
+    </div>
+
+    <div class="controls">
+        <select id="side">
+            <option value="buy">Limit Buy (Bid)</option>
+            <option value="sell">Limit Sell (Ask)</option>
+        </select>
+        <input type="number" id="price" placeholder="Price (cents)" min="1" max="99">
+        <input type="number" id="qty" placeholder="Quantity" min="1">
+        <button onclick="placeOrder()" class="btn-buy" id="action-btn">Place Order</button>
+    </div>
+
+    <div class="book-container">
+        <div class="column bids">
+            <div class="header">BIDS (Buyers wanting to buy)</div>
+            <div id="bids-list"></div>
+        </div>
+
+        <div class="column asks">
+            <div class="header">ASKS (Sellers wanting to sell)</div>
+            <div id="asks-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Refresh the order book every 1 second
+    setInterval(fetchBook, 1000);
+
+    async function fetchBook() {
+        const res = await fetch('/api/book');
+        const data = await res.json();
+        
+        // Render Bids
+        const bidsHtml = data.bids.map(o => 
+            `<div class="row"><span>${o.qty} shares</span> <span>@ ${o.price}¢</span></div>`
+        ).join('');
+        document.getElementById('bids-list').innerHTML = bidsHtml || '<div class="row">No buyers yet</div>';
+
+        // Render Asks
+        const asksHtml = data.asks.map(o => 
+            `<div class="row"><span>@ ${o.price}¢</span> <span>${o.qty} shares</span></div>`
+        ).join('');
+        document.getElementById('asks-list').innerHTML = asksHtml || '<div class="row">No sellers yet</div>';
+
+        // Update Last Trade Info
+        if(data.trades.length > 0) {
+            const last = data.trades[data.trades.length - 1];
+            document.getElementById('last-trade').innerText = `Last matched at ${last.price}¢`;
+        }
+    }
+
+    async function placeOrder() {
+        const side = document.getElementById('side').value;
+        const price = document.getElementById('price').value;
+        const qty = document.getElementById('qty').value;
+
+        await fetch('/api/order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ side, price, qty })
+        });
+        
+        // Clear inputs and refresh immediately
+        document.getElementById('qty').value = '';
+        fetchBook();
+    }
+</script>
+
+</body>
+</html>
