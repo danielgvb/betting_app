@@ -13,11 +13,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # --- MARKET DETAILS ---
+# In app.py
+
 MARKET_CONFIG = {
     "title": "Will Ivan Cepeda be elected President of Colombia?",
     "asset_name": "Ivan Cepeda (YES)",
-    "description": "This market tracks the probability of Ivan Cepeda winning the next presidential election. Trading closes on Election Day.",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Iv%C3%A1n_Cepeda_Castro%2C_Senator_of_Colombia.jpg/220px-Iv%C3%A1n_Cepeda_Castro%2C_Senator_of_Colombia.jpg" # Public domain image link
+    "description": "This market tracks the probability of Ivan Cepeda winning...",
+    
+    # UPDATE THIS LINE WITH THE DIRECT LINK:
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Perfil_Iv%C3%A1n_Cepeda.jpg/640px-Perfil_Iv%C3%A1n_Cepeda.jpg"
 }
 
 # --- DATABASE MODELS ---
