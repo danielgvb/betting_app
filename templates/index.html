@@ -3,121 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Market</title>
+    <title>{{ market.title }}</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .main-container { width: 1000px; max-width: 100%; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+
+        /* Header Section */
+        .header { grid-column: 1 / -1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; }
+        .candidate-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #0044cc; }
+        .market-info h1 { margin: 0; font-size: 1.5rem; color: #111; }
+        .market-info p { margin: 5px 0 0; color: #666; font-size: 0.9rem; }
+        .big-odds { font-size: 2rem; font-weight: 800; color: #0044cc; margin-left: auto; }
+        .big-odds span { font-size: 0.8rem; font-weight: normal; color: #666; display: block; text-align: right; }
+
+        /* Order Book Section */
+        .book-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .book-title { font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; }
+        .order-row { display: flex; justify-content: space-between; padding: 6px 0; font-family: monospace; font-size: 1rem; }
+        .bid-row { color: #00b894; background: rgba(0, 184, 148, 0.05); } /* Green */
+        .ask-row { color: #d63031; background: rgba(214, 48, 49, 0.05); } /* Red */
+        .spread-row { text-align: center; color: #aaa; font-size: 0.8rem; margin: 10px 0; font-style: italic; }
+
+        /* Trading Form */
+        .trade-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); height: fit-content; }
+        .trade-card h3 { margin-top: 0; }
+        label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
         
-        h1 { margin: 0 0 10px 0; font-size: 1.8rem; color: #1a1a1a; }
-        .question { color: #65676b; margin-bottom: 2rem; }
+        button { width: 100%; padding: 14px; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 1rem; color: white; transition: 0.2s; }
+        .btn-buy { background: #00b894; }
+        .btn-buy:hover { background: #00a187; }
+        .btn-sell { background: #d63031; }
+        .btn-sell:hover { background: #c0392b; }
 
-        /* Price Bars */
-        .bars { display: flex; height: 50px; border-radius: 8px; overflow: hidden; margin-bottom: 25px; font-weight: bold; color: white; cursor: default; }
-        .bar-yes { background: #34c759; display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; }
-        .bar-no { background: #ff3b30; display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; }
-
-        /* Inputs */
-        .input-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 0.8rem; color: #65676b; margin-bottom: 5px; font-weight: 600; }
-        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 1rem; outline: none; transition: border 0.2s; }
-        input:focus { border-color: #007aff; }
-
-        /* Buttons */
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        button { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.1s, opacity 0.2s; color: white; font-size: 1rem; }
-        button:active { transform: scale(0.98); }
-        .btn-yes { background: #34c759; }
-        .btn-no { background: #ff3b30; }
-
-        .log { margin-top: 20px; font-size: 0.9rem; color: #555; min-height: 20px; }
-        
-        .admin-link { display: block; margin-top: 30px; color: #007aff; text-decoration: none; font-size: 0.9rem; }
-        .admin-link:hover { text-decoration: underline; }
+        .download-link { display: block; margin-top: 20px; text-align: center; color: #0044cc; text-decoration: none; font-size: 0.9rem; }
+        .download-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Will it rain tomorrow?</h1>
-    <p class="question">Market Odds (AMM)</p>
-
-    <div class="bars">
-        <div id="bar-yes" class="bar-yes" style="width: 50%">50¢</div>
-        <div id="bar-no" class="bar-no" style="width: 50%">50¢</div>
+<div class="main-container">
+    
+    <div class="header">
+        <img src="{{ market.image_url }}" alt="Ivan Cepeda" class="candidate-img">
+        <div class="market-info">
+            <h1>{{ market.title }}</h1>
+            <p>{{ market.description }}</p>
+        </div>
+        <div class="big-odds">
+            <div id="display-odds">--%</div>
+            <span>Probability of YES</span>
+        </div>
     </div>
 
-    <div class="input-group">
-        <label>Your Email Address</label>
-        <input type="email" id="email" placeholder="name@example.com">
+    <div class="book-card">
+        <div class="book-title">
+            <span>BID (Buyers wanting YES)</span>
+            <span>ASK (Sellers offering YES)</span>
+        </div>
+        
+        <div style="display: flex; gap: 20px;">
+            <div style="flex:1">
+                <div style="font-size:0.8rem; color:#888; margin-bottom:5px; display:flex; justify-content:space-between;">
+                    <span>Size</span><span>Bid Price</span>
+                </div>
+                <div id="bids-list"></div>
+            </div>
+
+            <div style="flex:1">
+                <div style="font-size:0.8rem; color:#888; margin-bottom:5px; display:flex; justify-content:space-between;">
+                    <span>Ask Price</span><span>Size</span>
+                </div>
+                <div id="asks-list"></div>
+            </div>
+        </div>
     </div>
 
-    <div class="input-group">
-        <label>Number of Shares</label>
-        <input type="number" id="qty" value="10" min="1">
+    <div class="trade-card">
+        <h3>Place a Bet</h3>
+        
+        <label>Your Email</label>
+        <input type="email" id="email" placeholder="voter@example.com">
+
+        <label>I want to...</label>
+        <select id="side" onchange="updateButton()">
+            <option value="buy">Buy YES (Bet he wins)</option>
+            <option value="sell">Sell YES (Bet he loses / Cash out)</option>
+        </select>
+
+        <label>Odds / Price (1-99 cents)</label>
+        <input type="number" id="price" placeholder="e.g. 60 (for 60%)" min="1" max="99">
+
+        <label>Number of Contracts</label>
+        <input type="number" id="qty" placeholder="10">
+
+        <button id="action-btn" class="btn-buy" onclick="submitOrder()">Place Buy Order</button>
     </div>
 
-    <div class="controls">
-        <button class="btn-yes" onclick="buy('YES')">Buy YES</button>
-        <button class="btn-no" onclick="buy('NO')">Buy NO</button>
-    </div>
-
-    <div class="log" id="log"></div>
-
-    <a href="/download_trades" class="admin-link">⬇ Download Trade Report (CSV)</a>
 </div>
 
-<script>
-    async function updateState() {
-        const res = await fetch('/api/state');
-        const data = await res.json();
-        
-        const yesPct = (data.price_yes * 100).toFixed(1);
-        const noPct = (data.price_no * 100).toFixed(1);
-        
-        const barYes = document.getElementById('bar-yes');
-        const barNo = document.getElementById('bar-no');
+<a href="/download_report" class="download-link" style="grid-column: 1/-1;">⬇ Download Trade History (CSV)</a>
 
-        barYes.style.width = yesPct + "%";
-        barYes.innerText = Math.round(data.price_yes * 100) + "¢";
-        
-        barNo.style.width = noPct + "%";
-        barNo.innerText = Math.round(data.price_no * 100) + "¢";
+<script>
+    function updateButton() {
+        const side = document.getElementById('side').value;
+        const btn = document.getElementById('action-btn');
+        if(side === 'buy') {
+            btn.innerText = "Buy YES (Long)";
+            btn.className = "btn-buy";
+        } else {
+            btn.innerText = "Sell YES (Short)";
+            btn.className = "btn-sell";
+        }
     }
 
-    async function buy(outcome) {
+    async function submitOrder() {
         const email = document.getElementById('email').value;
+        const price = document.getElementById('price').value;
         const qty = document.getElementById('qty').value;
-        const log = document.getElementById('log');
+        
+        if(!email || !price || !qty) return alert("Please fill all fields");
 
-        if (!email) {
-            log.style.color = 'red';
-            log.innerText = "Please enter your email first!";
-            return;
-        }
+        const data = {
+            email: email,
+            side: document.getElementById('side').value,
+            price: price,
+            qty: qty
+        };
 
-        log.style.color = '#555';
-        log.innerText = "Processing...";
-
-        const res = await fetch('/api/buy', {
+        await fetch('/api/order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ email, outcome, qty })
+            body: JSON.stringify(data)
         });
-        
+
+        // Reset and Refresh
+        document.getElementById('qty').value = '';
+        fetchBook();
+    }
+
+    async function fetchBook() {
+        const res = await fetch('/api/book');
         const data = await res.json();
-        
-        if (data.error) {
-            log.style.color = 'red';
-            log.innerText = data.error;
-        } else {
-            log.style.color = 'green';
-            log.innerText = `Success! You paid $${data.cost.toFixed(2)}`;
-            updateState();
+
+        // Render Bids (Green)
+        const bidsHtml = data.bids.map(o => 
+            `<div class="order-row bid-row"><span>${o.qty}</span> <span>${o.price}¢</span></div>`
+        ).join('');
+        document.getElementById('bids-list').innerHTML = bidsHtml || '<div style="text-align:center; color:#ddd;">Empty</div>';
+
+        // Render Asks (Red) - Show lowest asks first
+        const asksHtml = data.asks.slice().reverse().map(o => 
+            `<div class="order-row ask-row"><span>${o.price}¢</span> <span>${o.qty}</span></div>`
+        ).join('');
+        document.getElementById('asks-list').innerHTML = asksHtml || '<div style="text-align:center; color:#ddd;">Empty</div>';
+
+        // Update Main Odds Display
+        if(data.last_trade) {
+            document.getElementById('display-odds').innerText = data.last_trade + "%";
         }
     }
 
-    updateState();
-    setInterval(updateState, 3000);
+    setInterval(fetchBook, 1000);
+    fetchBook();
 </script>
 
 </body>
