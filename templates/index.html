@@ -1,104 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Simple Prediction Market</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Market</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; }
-        .container { width: 800px; margin-top: 50px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 400px; text-align: center; }
         
-        /* Order Book Styling */
-        .book-container { display: flex; gap: 20px; margin-top: 20px; }
-        .column { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header { font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #ddd; padding-bottom: 5px;}
-        
-        .bids .header { color: #00b894; } /* Green for Buy */
-        .asks .header { color: #d63031; } /* Red for Sell */
-        
-        .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; }
-        
-        /* Form Styling */
-        .controls { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; gap: 10px; align-items: center;}
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 10px 20px; border: none; cursor: pointer; color: white; border-radius: 4px; font-weight: bold;}
-        .btn-buy { background: #00b894; }
-        .btn-sell { background: #d63031; }
+        h1 { margin: 0 0 10px 0; font-size: 1.8rem; color: #1a1a1a; }
+        .question { color: #65676b; margin-bottom: 2rem; }
 
-        .market-title { text-align: center; margin-bottom: 20px; }
+        /* Price Bars */
+        .bars { display: flex; height: 50px; border-radius: 8px; overflow: hidden; margin-bottom: 25px; font-weight: bold; color: white; cursor: default; }
+        .bar-yes { background: #34c759; display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; }
+        .bar-no { background: #ff3b30; display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-size: 0.8rem; color: #65676b; margin-bottom: 5px; font-weight: 600; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 1rem; outline: none; transition: border 0.2s; }
+        input:focus { border-color: #007aff; }
+
+        /* Buttons */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        button { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.1s, opacity 0.2s; color: white; font-size: 1rem; }
+        button:active { transform: scale(0.98); }
+        .btn-yes { background: #34c759; }
+        .btn-no { background: #ff3b30; }
+
+        .log { margin-top: 20px; font-size: 0.9rem; color: #555; min-height: 20px; }
+        
+        .admin-link { display: block; margin-top: 30px; color: #007aff; text-decoration: none; font-size: 0.9rem; }
+        .admin-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="market-title">
-        <h1>Market: Will it Rain Tomorrow?</h1>
-        <p>Current Status: <span id="last-trade">Waiting for trades...</span></p>
+<div class="card">
+    <h1>Will it rain tomorrow?</h1>
+    <p class="question">Market Odds (AMM)</p>
+
+    <div class="bars">
+        <div id="bar-yes" class="bar-yes" style="width: 50%">50¢</div>
+        <div id="bar-no" class="bar-no" style="width: 50%">50¢</div>
+    </div>
+
+    <div class="input-group">
+        <label>Your Email Address</label>
+        <input type="email" id="email" placeholder="name@example.com">
+    </div>
+
+    <div class="input-group">
+        <label>Number of Shares</label>
+        <input type="number" id="qty" value="10" min="1">
     </div>
 
     <div class="controls">
-        <select id="side">
-            <option value="buy">Limit Buy (Bid)</option>
-            <option value="sell">Limit Sell (Ask)</option>
-        </select>
-        <input type="number" id="price" placeholder="Price (cents)" min="1" max="99">
-        <input type="number" id="qty" placeholder="Quantity" min="1">
-        <button onclick="placeOrder()" class="btn-buy" id="action-btn">Place Order</button>
+        <button class="btn-yes" onclick="buy('YES')">Buy YES</button>
+        <button class="btn-no" onclick="buy('NO')">Buy NO</button>
     </div>
 
-    <div class="book-container">
-        <div class="column bids">
-            <div class="header">BIDS (Buyers wanting to buy)</div>
-            <div id="bids-list"></div>
-        </div>
+    <div class="log" id="log"></div>
 
-        <div class="column asks">
-            <div class="header">ASKS (Sellers wanting to sell)</div>
-            <div id="asks-list"></div>
-        </div>
-    </div>
+    <a href="/download_trades" class="admin-link">⬇ Download Trade Report (CSV)</a>
 </div>
 
 <script>
-    // Refresh the order book every 1 second
-    setInterval(fetchBook, 1000);
-
-    async function fetchBook() {
-        const res = await fetch('/api/book');
+    async function updateState() {
+        const res = await fetch('/api/state');
         const data = await res.json();
         
-        // Render Bids
-        const bidsHtml = data.bids.map(o => 
-            `<div class="row"><span>${o.qty} shares</span> <span>@ ${o.price}¢</span></div>`
-        ).join('');
-        document.getElementById('bids-list').innerHTML = bidsHtml || '<div class="row">No buyers yet</div>';
+        const yesPct = (data.price_yes * 100).toFixed(1);
+        const noPct = (data.price_no * 100).toFixed(1);
+        
+        const barYes = document.getElementById('bar-yes');
+        const barNo = document.getElementById('bar-no');
 
-        // Render Asks
-        const asksHtml = data.asks.map(o => 
-            `<div class="row"><span>@ ${o.price}¢</span> <span>${o.qty} shares</span></div>`
-        ).join('');
-        document.getElementById('asks-list').innerHTML = asksHtml || '<div class="row">No sellers yet</div>';
+        barYes.style.width = yesPct + "%";
+        barYes.innerText = Math.round(data.price_yes * 100) + "¢";
+        
+        barNo.style.width = noPct + "%";
+        barNo.innerText = Math.round(data.price_no * 100) + "¢";
+    }
 
-        // Update Last Trade Info
-        if(data.trades.length > 0) {
-            const last = data.trades[data.trades.length - 1];
-            document.getElementById('last-trade').innerText = `Last matched at ${last.price}¢`;
+    async function buy(outcome) {
+        const email = document.getElementById('email').value;
+        const qty = document.getElementById('qty').value;
+        const log = document.getElementById('log');
+
+        if (!email) {
+            log.style.color = 'red';
+            log.innerText = "Please enter your email first!";
+            return;
+        }
+
+        log.style.color = '#555';
+        log.innerText = "Processing...";
+
+        const res = await fetch('/api/buy', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, outcome, qty })
+        });
+        
+        const data = await res.json();
+        
+        if (data.error) {
+            log.style.color = 'red';
+            log.innerText = data.error;
+        } else {
+            log.style.color = 'green';
+            log.innerText = `Success! You paid $${data.cost.toFixed(2)}`;
+            updateState();
         }
     }
 
-    async function placeOrder() {
-        const side = document.getElementById('side').value;
-        const price = document.getElementById('price').value;
-        const qty = document.getElementById('qty').value;
-
-        await fetch('/api/order', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ side, price, qty })
-        });
-        
-        // Clear inputs and refresh immediately
-        document.getElementById('qty').value = '';
-        fetchBook();
-    }
+    updateState();
+    setInterval(updateState, 3000);
 </script>
 
 </body>
