@@ -12,18 +12,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cepeda_market.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- MARKET DETAILS ---
-# In app.py
 
+
+# --- MARKET DETAILS ---
 MARKET_CONFIG = {
     "title": "Will Ivan Cepeda be elected President of Colombia?",
     "asset_name": "Ivan Cepeda (YES)",
-    "description": "This market tracks the probability of Ivan Cepeda winning...",
+    "description": "This market tracks the probability of Ivan Cepeda winning the next presidential election. Trading closes on Election Day.",
     
-    # UPDATE THIS LINE WITH THE DIRECT LINK:
+    # This is the direct link to the image file (ending in .jpg)
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Perfil_Iv%C3%A1n_Cepeda.jpg/640px-Perfil_Iv%C3%A1n_Cepeda.jpg"
 }
-
 # --- DATABASE MODELS ---
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
