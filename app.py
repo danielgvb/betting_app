@@ -18,10 +18,12 @@ db = SQLAlchemy(app)
 MARKET_CONFIG = {
     "title": "Will Ivan Cepeda be elected President of Colombia?",
     "asset_name": "Ivan Cepeda (YES)",
-    "description": "This market tracks the probability of Ivan Cepeda winning the next presidential election. Trading closes on Election Day.",
+    "description": "This market tracks the probability of Ivan Cepeda winning...",
     
-    # This is the direct link to the image file (ending in .jpg)
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Perfil_Iv%C3%A1n_Cepeda.jpg/640px-Perfil_Iv%C3%A1n_Cepeda.jpg"
+    # CHANGE THIS LINE to point to your local file
+    # Note: Do not include "static" in the URL path here if using url_for, 
+    # but for simplicity in this config object, we use the direct path:
+    "image_url": "/static/candidate.jpg"
 }
 # --- DATABASE MODELS ---
 class Order(db.Model):
